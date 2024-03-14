@@ -15,7 +15,7 @@ p
 }
 .scrollable-window
 {
-	height: 30vh; 
+	height: 70vh; 
     overflow-y: scroll;
     background-color: #f8f9fa; 
     padding-top: 20px;

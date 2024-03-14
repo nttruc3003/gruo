@@ -11,8 +11,6 @@ var pi = this;
 
 var vendor ="";
 
-var productType = "";
-
 var productsData =[];
 
 pi.clouch = function() {
@@ -41,10 +39,6 @@ pi.render = function(options) {
                 	
                 	
                 	
-            	</div>
-            	<p>Product Type</p><br>
-            	<div class="row scrollable-window " id = "productTypes">
-            		                	
             	</div>
             	<button class="fetch-products">Search Products</button>
             </div>
@@ -79,21 +73,14 @@ pi.loadSearchOptions = function () {
         </div>`
 	});
 	$('#vendors').html(brandsHtml);
-	pTypesHtml = ``;
-	config.hierarchy.productTypes.forEach(productType => {
-		pTypesHtml +=
-    	`<div class= "col-md-12  productType" data-name="${productType}">
-        	<span>${productType}</span>
-        </div>`
-	});
-	$('#productTypes').html(pTypesHtml);
+	
 	
 	
 }
 
 var click = function(target) {
 	if ($(target).hasClass('test1')){
-		alert("brand: " + vendor +", productType: " +productType)
+		alert("brand: " + vendor)
 	}else if ($(target).hasClass('vendor')){
 		vendor = $(target).data('name');
 	} else if ($(target).hasClass('productType')) {
@@ -107,7 +94,7 @@ var click = function(target) {
 
 pi.fetchProducts = function(){
 	/*alert('Fetch')*/
-	const query = `
+	/*const query = `
 	{
 		products(first: 250, query: "vendor:'${vendor}' AND product_type:'${productType}'") {
 	    edges {
@@ -138,6 +125,19 @@ pi.fetchProducts = function(){
 	    }
 	  }
 	}
+	`;*/
+	const query = `
+		{
+		  collections(first: 250) {
+		    edges {
+		      node {
+		        id
+		        title
+		        
+		      }
+		    }
+		  }
+		}
 	`;
     const shopifyLink = `https://nail-daily.myshopify.com/api/2024-01/graphql.json`
     /*const shopifyLink = `https://tukanotesting.myshopify.com/api/2024-01/graphql.json`*/
@@ -156,13 +156,13 @@ pi.fetchProducts = function(){
     .then(response => response.json())
     .then(data => {
         
-        productsData = data.data.products.edges
+        /*productsData = data.data.products.edges*/
         console.log(productsData);
-        if (Array.isArray(productsData))console.log('True2')
-        pi.displayProducts(productsData)
+        /*if (Array.isArray(productsData))console.log('True2')
+        pi.displayProducts(productsData)*/
     })
     .catch(error => console.error('Error fetching products:', error));
-    pi.displayProducts(productsData)
+    /*pi.displayProducts(productsData)*/
     
     
 };
