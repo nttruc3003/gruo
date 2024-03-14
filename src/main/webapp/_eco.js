@@ -94,61 +94,65 @@ var click = function(target) {
 
 pi.fetchProducts = function(){
 	/*alert('Fetch')*/
-	/*const query = `
-	{
-		products(first: 250, query: "vendor:'${vendor}' AND product_type:'${productType}'") {
-	    edges {
-	      node {
-	        id
-	        title
-	        descriptionHtml
-	        vendor
-	        productType
-	        variants(first: 1) {
-	          edges {
-	            node {
-	              price{
-					  amount
-				  }
-	            }
-	          }
-	        }
-	        images(first: 1) {
-	          edges {
-	            node {
-	              src
-	              altText
-	            }
-	          }
-	        }
-	      }
-	    }
-	  }
-	}
-	`;*/
+	let productType = "SOAK OF GEL";
+//	const query = `
+//	{
+//		products(first: 250, query: "vendor:'${vendor}'") {
+//	    edges {
+//	      node {
+//	        id
+//	        title
+//	        descriptionHtml
+//	        vendor
+//	        productType
+//	        
+//	        images(first: 1) {
+//	          edges {
+//	            node {
+//	              src
+//	              altText
+//	            }
+//	          }
+//	        }
+//	      }
+//	    }
+//	  }
+//	}
+//	`;
 	const query = `
 		{
-		  collections(first: 250) {
+		  collections(first: 10) {
 		    edges {
+		      cursor
 		      node {
 		        id
+		        handle
 		        title
-		        
+		        metafields(identifiers: [{ namespace: "custom", key:"brand"  }]) {
+				    key
+				    namespace
+				    value
+				    id
+				  }
 		      }
+		    }
+		    pageInfo {
+		      hasNextPage
+		      hasPreviousPage
 		    }
 		  }
 		}
 	`;
-    const shopifyLink = `https://nail-daily.myshopify.com/api/2024-01/graphql.json`
-    /*const shopifyLink = `https://tukanotesting.myshopify.com/api/2024-01/graphql.json`*/
+//    const shopifyLink = `https://nail-daily.myshopify.com/api/2024-01/graphql.json`
+    const shopifyLink = `https://tukanotesting.myshopify.com/api/2024-01/graphql.json`
     fetch(shopifyLink, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             //Testing Store
-            /*'X-Shopify-Storefront-Access-Token': '07b6fad9bbb166417181040e4f2257b1'*/
+            'X-Shopify-Storefront-Access-Token': '07b6fad9bbb166417181040e4f2257b1'
             //Nail Deli
-            'X-Shopify-Storefront-Access-Token': '47e4288ccc74d61c3a4768841e6268c4'
+//            'X-Shopify-Storefront-Access-Token': '47e4288ccc74d61c3a4768841e6268c4'
             
         },
         body: JSON.stringify({ query })
@@ -157,7 +161,8 @@ pi.fetchProducts = function(){
     .then(data => {
         
         /*productsData = data.data.products.edges*/
-        console.log(productsData);
+        console.log(query)
+        console.log(data);
         /*if (Array.isArray(productsData))console.log('True2')
         pi.displayProducts(productsData)*/
     })
