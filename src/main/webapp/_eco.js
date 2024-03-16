@@ -11,13 +11,19 @@ var pi = this;
 
 var vendor ="";
 
-var productsData =[];
+const brandsDict = {};
+const shopifyLink = `https://nail-daily.myshopify.com/api/2024-01/graphql.json`;
+//					 `https://tukanotesting.myshopify.com/api/2024-01/graphql.json`;
+const token = 
+//			'07b6fad9bbb166417181040e4f2257b1';
+            //Nail Deli
+            '47e4288ccc74d61c3a4768841e6268c4';
 
 pi.clouch = function() {
 	clouch('#moeco button.test1', click);
-	clouch('#search-groups button.fetch-products', this.fetchProducts);
-	clouch('#vendors button.vendor', click);
-	clouch('#productTypes .productType', click);
+//clouch('#search-groups button.fetch-products', this.fetchProducts);
+//	clouch('#vendors .brand', click);
+//	clouch('#productTypes .productType', click);
 };
 
 pi.load = function(next) {
@@ -62,14 +68,13 @@ pi.render = function(options) {
 };
 /*Load the data from config.js file*/
 pi.loadSearchOptions = function () {
+	pi.fetchCollections();
 	brandsHtml = ``;
 	config.hierarchy.brands.forEach(brand => {
 		brandsHtml +=
-    	`<div class ="col-md-6">
-        	<button class="btn btn-default vendor" data-name="${brand}">
-    			<img src="images/DND.png" alt="Icon" style= "max-width: 100%; height: auto;">
-    			<p style = "color: Black">${brand}</p>
-  			</button>
+    	`<div class ="col-md-6 brand" data-name="${brand}">
+			<img src="images/DND.png" alt="Icon" style= "max-width: 100%; height: auto;">
+			<p style = "color: Black">${brand}</p>
         </div>`
 	});
 	$('#vendors').html(brandsHtml);
@@ -81,7 +86,9 @@ pi.loadSearchOptions = function () {
 var click = function(target) {
 	if ($(target).hasClass('test1')){
 		alert("brand: " + vendor)
-	}else if ($(target).hasClass('vendor')){
+	}else if ($(target).hasClass('brand')){
+		$('#vendors .brand').removeClass('border-bold');
+		$(target).addClass('border-bold')
 		vendor = $(target).data('name');
 	} else if ($(target).hasClass('productType')) {
 		$('#productTypes .productType').removeClass('border-bold');
@@ -92,9 +99,8 @@ var click = function(target) {
 		
 };
 
-pi.fetchProducts = function(){
+pi.fetchCollections = function(){
 	/*alert('Fetch')*/
-	let productType = "SOAK OF GEL";
 //	const query = `
 //	{
 //		products(first: 250, query: "vendor:'${vendor}'") {
@@ -128,12 +134,12 @@ pi.fetchProducts = function(){
 		        id
 		        handle
 		        title
-		        metafields(identifiers: [{ namespace: "custom", key:"brand"  }]) {
-				    key
-				    namespace
-				    value
-				    id
-				  }
+		        metafields(identifiers: [{namespace: "custom", key: "brand"}, {namespace: "custom", key: "color_number_index"}]) {
+		          key
+		          namespace
+		          value
+		          id
+		        }
 		      }
 		    }
 		    pageInfo {
@@ -143,16 +149,12 @@ pi.fetchProducts = function(){
 		  }
 		}
 	`;
-//    const shopifyLink = `https://nail-daily.myshopify.com/api/2024-01/graphql.json`
-    const shopifyLink = `https://tukanotesting.myshopify.com/api/2024-01/graphql.json`
+
     fetch(shopifyLink, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            //Testing Store
-            'X-Shopify-Storefront-Access-Token': '07b6fad9bbb166417181040e4f2257b1'
-            //Nail Deli
-//            'X-Shopify-Storefront-Access-Token': '47e4288ccc74d61c3a4768841e6268c4'
+            'X-Shopify-Storefront-Access-Token': token
             
         },
         body: JSON.stringify({ query })
@@ -161,10 +163,23 @@ pi.fetchProducts = function(){
     .then(data => {
         
         /*productsData = data.data.products.edges*/
-        console.log(query)
-        console.log(data);
+
+        let collectionsArray = data.data.collections.edges;
+        console.log(collectionsArray);
         /*if (Array.isArray(productsData))console.log('True2')
         pi.displayProducts(productsData)*/
+        collectionsArray.forEach(collection => {
+			 
+			 if (collection.node.metafields && collection.node.metafields.length > 0) {
+				 let metafields = collection.node.metafields;
+				 let brand = metafields[0]?metafields[0].value : "";
+				 if (!brandsDict[brand]) {
+					 brandsDict[brand]=[];
+				 }
+				 brandsDict[brand].push(collection);
+			 }
+		});
+		console.log(brandsDict);
     })
     .catch(error => console.error('Error fetching products:', error));
     /*pi.displayProducts(productsData)*/

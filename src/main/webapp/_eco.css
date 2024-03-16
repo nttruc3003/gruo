@@ -20,7 +20,12 @@ p
     background-color: #f8f9fa; 
     padding-top: 20px;
 }
-
+.brand {
+	display:flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
 .product {
 	height: 350px;
 	display: flex;
