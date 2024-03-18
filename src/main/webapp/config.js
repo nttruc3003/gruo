@@ -4,7 +4,7 @@ const config = {
 	hierarchy : {
 		groups:		["GEL X/ Extention Gel", "3 IN 1 (GEL, POLISH, POWDER)","DIPPING LIQUID",
 			 		"BASE-TOP", "NAIL TOOLS", "SALON EQUIPMENTS", "SPECIAL"],
-		brands: 	["DND", "DC", "iGel", "Gelish", "Cre8tion", "CND"],
+		brands: 	["DND", "DC", "iGel", "Gelish", "Cre8tion", "CND","Gelixir"],
 		productTypes:["SOAK OFF GEL", "ACRYLIC POWDER & LIQUID", "ART TIPS", "BUILDER GELS", "DIPPING POWDERS",
 				  	 "NAIL ART", "NAIL BRUSH"]
 	}	

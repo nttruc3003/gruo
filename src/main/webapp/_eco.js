@@ -12,6 +12,7 @@ var pi = this;
 var vendor ="";
 
 const brandsDict = {};
+
 const shopifyLink = `https://nail-daily.myshopify.com/api/2024-01/graphql.json`;
 //					 `https://tukanotesting.myshopify.com/api/2024-01/graphql.json`;
 const token = 
@@ -21,8 +22,9 @@ const token =
 
 pi.clouch = function() {
 	clouch('#moeco button.test1', click);
+	pi.fetchCollections();
 //clouch('#search-groups button.fetch-products', this.fetchProducts);
-//	clouch('#vendors .brand', click);
+	clouch('#vendors .brand', click);
 //	clouch('#productTypes .productType', click);
 };
 
@@ -33,6 +35,7 @@ pi.load = function(next) {
 
 pi.render = function(options) {
 	/*Load the page at the beginning*/
+	
 	var html =
 		`<div><button class="test1">Test One</button></div>
 		<br>
@@ -63,12 +66,13 @@ pi.render = function(options) {
         </div>
     	`;
 	$('#moeco').html(html);
+		
 	pi.loadSearchOptions();
 	
 };
 /*Load the data from config.js file*/
 pi.loadSearchOptions = function () {
-	pi.fetchCollections();
+	console.log(brandsDict);
 	brandsHtml = ``;
 	config.hierarchy.brands.forEach(brand => {
 		brandsHtml +=
@@ -78,18 +82,20 @@ pi.loadSearchOptions = function () {
         </div>`
 	});
 	$('#vendors').html(brandsHtml);
+
 	
 	
 	
-}
+};
 
 var click = function(target) {
 	if ($(target).hasClass('test1')){
-		alert("brand: " + vendor)
+		console.log(brandsDict["Gelixir"]);
+		pi.displayCollection(brandsDict["Gelixir"]);
 	}else if ($(target).hasClass('brand')){
-		$('#vendors .brand').removeClass('border-bold');
-		$(target).addClass('border-bold')
-		vendor = $(target).data('name');
+		$('#vendors .brand').removeClass('border-light');
+		$(target).addClass('border-light')
+		pi.displayCollection(brandsDict[$(target).data('name')]);
 	} else if ($(target).hasClass('productType')) {
 		$('#productTypes .productType').removeClass('border-bold');
 		$(target).addClass('border-bold')
@@ -134,6 +140,10 @@ pi.fetchCollections = function(){
 		        id
 		        handle
 		        title
+		        image {
+		          src
+		          altText
+		        }
 		        metafields(identifiers: [{namespace: "custom", key: "brand"}, {namespace: "custom", key: "color_number_index"}]) {
 		          key
 		          namespace
@@ -161,13 +171,7 @@ pi.fetchCollections = function(){
     })
     .then(response => response.json())
     .then(data => {
-        
-        /*productsData = data.data.products.edges*/
-
         let collectionsArray = data.data.collections.edges;
-        console.log(collectionsArray);
-        /*if (Array.isArray(productsData))console.log('True2')
-        pi.displayProducts(productsData)*/
         collectionsArray.forEach(collection => {
 			 
 			 if (collection.node.metafields && collection.node.metafields.length > 0) {
@@ -179,42 +183,43 @@ pi.fetchCollections = function(){
 				 brandsDict[brand].push(collection);
 			 }
 		});
-		console.log(brandsDict);
+		
+		
+		
     })
     .catch(error => console.error('Error fetching products:', error));
-    /*pi.displayProducts(productsData)*/
+//    console.log(brandsDict);
+//	localStorage.setItem('brandsData', JSON.stringify(brandsDict));
+//	let datajson = JSON.parse(localStorage.getItem('brandsData'));
+//	console.log(datajson);
+//    
     
     
 };
 
-pi.displayProducts = function(productsData){
-	let productsHtml = ''
-	productsData.forEach(({node}) => {
-		let imgSrc = node.images.edges[0] ? node.images.edges[0].node.src : 'images/DND.png';
-		let productPrice = node.variants.edges[0].node.price.amount;
+pi.displayCollection = function(collections){
+	console.log(collections);
+	let collectionsHtml = ''
+	collections.forEach(collection => {
+		const node = collection.node;
+		let imgSrc = node.image? node.image.src : 'images/DND.png';
+//		let productPrice = node.variants.edges[0].node.price.amount;
 		/*let productTitle = (node.title.length > 64) ? (node.title.slice(0,64) + "...") : node.title;*/
-		titleArray = node.title.split(",");
-		let productTitle = node.title;
-		let colorNum = titleArray[1];
+//		titleArray = node.title.split(",");
+		let collectionTitle = node.title;
+//		let colorNum = titleArray[1];
 		
-		productsHtml +=
-		`<div class ="col-md-3 border-light product">
-        	<div class= "product-img">
-        		<span class="color-number">${colorNum}</span>
+		collectionsHtml +=
+		`<div class ="col-md-3 border-light collection">
+        	<div class= "collection-img">
         		<img src="${imgSrc}" alt="Icon" >
         	</div>
-			<div class= "product-title">
-				<p>${productTitle}</p>
-			</div>
-			<div class= "product-price">
-				<h3> ${productPrice} USD</h3>
-			</div>
-			<div class= "product-function">
-				<p>Brand: ${node.vendor}</p>
+			<div class= "collection-title">
+				<p>${collectionTitle}</p>
 			</div>
 		</div>`;
 	});
-	$('#product-container').html(productsHtml);
+	$('#product-container').html(collectionsHtml);
 }
 
 }();
