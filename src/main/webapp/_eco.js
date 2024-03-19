@@ -11,6 +11,8 @@ var pi = this;
 
 var vendor = '';
 
+var collectionGid='';
+
 const brandsDict = {};
 
 const collectionDict = {};
@@ -52,11 +54,7 @@ pi.render = function(options) {
 	/*Load the page at the beginning*/
 	
 	var html =
-		`<div><button class="test1">Test One</button></div>
-		<br>
-		
-		
-		<div class="row ">
+		`<div class="row ">
             <div class="col-md-2 border-bold" id="search-groups">
                 <p>Brands</p><br>
                 <div class="row scrollable-window" id="vendors">
@@ -64,10 +62,10 @@ pi.render = function(options) {
                 	
                 	
             	</div>
-            	<button class="fetch-products">Search Products</button>
+            	<div><button class="test1">Test One</button></div>
             </div>
-            <div class="col-md-7 border-bold" id = "products-list">
-                <div class = "col-md-12 scrollable-window" id="display-container" style="height: 90vh">
+            <div class="col-md-7 border-bold" id = "display-container">
+                <div class = "col-md-12 scrollable-window" id="collection-container" style="height: 90vh">
                 
                     
                     
@@ -117,8 +115,9 @@ var click = function(target) {
 			console.error('Fail to fetch collections.')
 		};
 	} else if ($(target).hasClass('collection')) {
-		pi.fetchProducts($(target).data('name')).then(()=> {
-			pi.displayProductsOfCollections($(target).data('name'));
+		let collectionId = $(target).data('name');
+		pi.fetchProducts(collectionId).then(()=> {
+			pi.displayProducts(collectionId);
 		}).catch(error => {
 			console.error('Error in fetching products:', error);
 		});
@@ -198,6 +197,10 @@ pi.fetchCollections = function(){
 };
 
 pi.displayCollection = function(collections){
+	let collectionFrames = `
+	<div class = "col-md-12 scrollable-window" id="collection-container" style="height: 90vh">                
+    </div>`;
+    $('#display-container').html(collectionFrames);
 	let collectionsHtml = ''
 	collections.forEach(collection => {
 		const node = collection.node;
@@ -208,6 +211,7 @@ pi.displayCollection = function(collections){
 		let collectionTitle = node.title;
 //		let colorNum = titleArray[1];
 		let collectionID = node.id;
+		let brand = node.metafields[0]? node.metafields[0].value : "";
 		
 		collectionsHtml +=
 		`<div class ="col-md-3 border-light collection" data-name="${collectionID}">
@@ -219,65 +223,79 @@ pi.displayCollection = function(collections){
 			</div>
 		</div>`;
 	});
-	$('#display-container').html(collectionsHtml);
+	$('#collection-container').html(collectionsHtml);
 };
 
 pi.fetchProducts = function(id){
 	/*alert('Fetch')*/
 	return new Promise((resolve, reject) => {
-	const query = `
-		{
-		  collection(id: "${id}") {
-		    title
-		    products(first: 250) {
-		      edges {
-		        node {
-		          id
-		          title
-		          description
-		          images(first: 1) {
-		            edges {
-		              node {
-		                src
-		                altText
-		              }
-		            }
-		          }
-		          priceRange {
-		            minVariantPrice {
-		              amount
-		              currencyCode
-		            }
-		          }
-		        }
-		      }
-		    }
-		  }
+		if (collectionDict[id]) {
+			resolve();
+		} else {
+			const query = `
+				{
+				  collection(id: "${id}") {
+				    title
+				    image {
+			          src
+			          altText
+			        }
+			        metafields(identifiers: [{namespace: "custom", key: "brand"}, {namespace: "custom", key: "color_number_index"}]) {
+			          key
+			          namespace
+			          value
+			          id
+			        }
+				    products(first: 250) {
+				      edges {
+				        node {
+				          id
+				          title
+				          description
+				          images(first: 1) {
+				            edges {
+				              node {
+				                src
+				                altText
+				              }
+				            }
+				          }
+				          priceRange {
+				            minVariantPrice {
+				              amount
+				              currencyCode
+				            }
+				          }
+				        }
+				      }
+				    }
+				  }
+				}
+				`;
+		
+		    fetch(shopifyLink, {
+		        method: 'POST',
+		        headers: {
+		            'Content-Type': 'application/json',
+		            'X-Shopify-Storefront-Access-Token': token
+		            
+		        },
+		        body: JSON.stringify({ query })
+		    })
+		    .then(response => response.json())
+		    .then(data => {
+		//        console.log(data);
+		        
+		        collectionDict[id] = data;
+				resolve();
+				
+				
+		    })
+		    .catch(error => {
+				console.error('Error fetching products:', error);
+				reject(error);
+			})
 		}
-		`;
-
-    fetch(shopifyLink, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Storefront-Access-Token': token
-            
-        },
-        body: JSON.stringify({ query })
-    })
-    .then(response => response.json())
-    .then(data => {
-//        console.log(data);
-        let productsArray = data.data.collection.products.edges;
-        collectionDict[id] = productsArray;
-		resolve();
-		
-		
-    })
-    .catch(error => {
-		console.error('Error fetching products:', error);
-		reject(error);
-		})
     
     });
 //    console.log(brandsDict);
@@ -289,11 +307,46 @@ pi.fetchProducts = function(id){
     
 };
 
-pi.displayProductsOfCollections= function(collectionID) {
-	console.log(collectionID);
-	console.log(collectionDict);
-	let products = collectionDict[collectionID];
-	console.log(products);
+pi.displayProducts = function(collectionID) {
+	collectionGid = collectionID;
+	let collectionData = collectionDict[collectionID];
+	console.log(collectionData);
+	let collection = collectionData.data.collection; 
+	let colImageSrc = collection.image? collection.image.src : "images/DND.png";
+	let colTitle = collection.title;
+	productFramesHtml = `
+	<div class="row ">
+        <div class="col-md-4 border-bold product-info" id="display-product">
+        	<div class = "product-img">
+        		<img src="${colImageSrc}" alt="Icon" >
+        	</div>
+        	<div class = "product-title">
+        		<h3>${colTitle}</h3>
+        	</div>
+        </div>
+        <div class="col-md-8 border-bold" id = "special-products">
+            <div class = "scrollable-window" id="color-number" style="height: 50vh">
+            
+                
+                
+            </div>
+        </div>
+    </div>
+    <div class="row scrollable-window" id ="colorbased-products">
+        
+    </div>
+	`;
+	$('#display-container').html(productFramesHtml);
+	let nameIndex = collection.metafields? collection.metafields[1].value: 99;
+	collection.products.edges.forEach(({node}, index) => {
+		titleArray = node.title.split(",");
+		console.log(titleArray);
+		if(titleArray[nameIndex]) {
+			
+		} else {
+			
+		}
+	})
 
 };   
 
