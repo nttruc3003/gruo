@@ -9,9 +9,11 @@ var moeco = new function() {
 
 var pi = this;
 
-var vendor ="";
+var vendor = '';
 
 const brandsDict = {};
+
+const collectionDict = {};
 
 const shopifyLink = `https://nail-daily.myshopify.com/api/2024-01/graphql.json`;
 //					 `https://tukanotesting.myshopify.com/api/2024-01/graphql.json`;
@@ -22,10 +24,23 @@ const token =
 
 pi.clouch = function() {
 	clouch('#moeco button.test1', click);
-	pi.fetchCollections();
-//clouch('#search-groups button.fetch-products', this.fetchProducts);
+	pi.fetchCollections().then(()=> {
+		let colList = [];
+		const brandKeys = Object.keys(brandsDict);
+		for(let i = 0; i < brandKeys.length; i++){
+//			console.log(brandKeys[i], colList);
+			if (colList.length <50) {
+				colList = colList.concat(brandsDict[brandKeys[i]].collections);
+			} else break;
+			
+		};
+		
+		pi.displayCollection(colList);
+	}).catch(error => {
+		console.error('Error in fetching collections:', error);
+	});
 	clouch('#vendors .brand', click);
-//	clouch('#productTypes .productType', click);
+	clouch('#display-container .collection', click);
 };
 
 pi.load = function(next) {
@@ -52,7 +67,7 @@ pi.render = function(options) {
             	<button class="fetch-products">Search Products</button>
             </div>
             <div class="col-md-7 border-bold" id = "products-list">
-                <div class = "col-md-12 scrollable-window" id="product-container" style="height: 90vh">
+                <div class = "col-md-12 scrollable-window" id="display-container" style="height: 90vh">
                 
                     
                     
@@ -72,7 +87,6 @@ pi.render = function(options) {
 };
 /*Load the data from config.js file*/
 pi.loadSearchOptions = function () {
-	console.log(brandsDict);
 	brandsHtml = ``;
 	config.hierarchy.brands.forEach(brand => {
 		brandsHtml +=
@@ -90,75 +104,157 @@ pi.loadSearchOptions = function () {
 
 var click = function(target) {
 	if ($(target).hasClass('test1')){
-		console.log(brandsDict["Gelixir"]);
-		pi.displayCollection(brandsDict["Gelixir"]);
+		console.log(collectionDict);
+		
 	}else if ($(target).hasClass('brand')){
+		vendor = $(target).data('name');
 		$('#vendors .brand').removeClass('border-light');
-		$(target).addClass('border-light')
-		pi.displayCollection(brandsDict[$(target).data('name')]);
-	} else if ($(target).hasClass('productType')) {
-		$('#productTypes .productType').removeClass('border-bold');
-		$(target).addClass('border-bold')
-		productType = $(target).data('name');
+		$(target).addClass('border-light');
+		
+		if (brandsDict[vendor] && brandsDict[vendor].collections) {
+			pi.displayCollection(brandsDict[vendor].collections);
+		} else {
+			console.error('Fail to fetch collections.')
+		};
+	} else if ($(target).hasClass('collection')) {
+		pi.fetchProducts($(target).data('name')).then(()=> {
+			pi.displayProductsOfCollections($(target).data('name'));
+		}).catch(error => {
+			console.error('Error in fetching products:', error);
+		});
 	}
 		
 		
 };
 
 pi.fetchCollections = function(){
+	return new Promise((resolve, reject) => {
+		const query = `
+			{
+			  collections(first: 10) {
+			    edges {
+			      cursor
+			      node {
+			        id
+			        handle
+			        title
+			        image {
+			          src
+			          altText
+			        }
+			        metafields(identifiers: [{namespace: "custom", key: "brand"}, {namespace: "custom", key: "color_number_index"}]) {
+			          key
+			          namespace
+			          value
+			          id
+			        }
+			      }
+			    }
+			    pageInfo {
+			      hasNextPage
+			      hasPreviousPage
+			    }
+			  }
+			}
+		`;
+	
+	    fetch(shopifyLink, {
+	        method: 'POST',
+	        headers: {
+	            'Content-Type': 'application/json',
+	            'X-Shopify-Storefront-Access-Token': token
+	            
+	        },
+	        body: JSON.stringify({ query })
+	    })
+	    .then(response => response.json())
+	    .then(data => {
+	        let collectionsArray = data.data.collections.edges;
+	        collectionsArray.forEach(collection => {
+				 
+				 if (collection.node.metafields && collection.node.metafields.length > 0) {
+					 let metafields = collection.node.metafields;
+					 let brand = metafields[0]?metafields[0].value : "";
+					 if (!brandsDict[brand]) {
+						 
+						 brandsDict[brand]= {
+							"collections":[], 
+						 	"nameIndex": metafields[1]?metafields[1].value :''};
+					 };
+					 brandsDict[brand].collections.push(collection);
+				 }
+			});
+			
+			resolve();
+			
+	    })
+	    .catch(error => {
+			console.error('Error fetching collections:', error);
+			reject(error);
+		})
+	});
+
+    
+};
+
+pi.displayCollection = function(collections){
+	let collectionsHtml = ''
+	collections.forEach(collection => {
+		const node = collection.node;
+		let imgSrc = node.image? node.image.src : 'images/DND.png';
+//		let productPrice = node.variants.edges[0].node.price.amount;
+		/*let productTitle = (node.title.length > 64) ? (node.title.slice(0,64) + "...") : node.title;*/
+//		titleArray = node.title.split(",");
+		let collectionTitle = node.title;
+//		let colorNum = titleArray[1];
+		let collectionID = node.id;
+		
+		collectionsHtml +=
+		`<div class ="col-md-3 border-light collection" data-name="${collectionID}">
+        	<div class= "collection-img">
+        		<img src="${imgSrc}" alt="Icon" >
+        	</div>
+			<div class= "collection-title">
+				<p>${collectionTitle}</p>
+			</div>
+		</div>`;
+	});
+	$('#display-container').html(collectionsHtml);
+};
+
+pi.fetchProducts = function(id){
 	/*alert('Fetch')*/
-//	const query = `
-//	{
-//		products(first: 250, query: "vendor:'${vendor}'") {
-//	    edges {
-//	      node {
-//	        id
-//	        title
-//	        descriptionHtml
-//	        vendor
-//	        productType
-//	        
-//	        images(first: 1) {
-//	          edges {
-//	            node {
-//	              src
-//	              altText
-//	            }
-//	          }
-//	        }
-//	      }
-//	    }
-//	  }
-//	}
-//	`;
+	return new Promise((resolve, reject) => {
 	const query = `
 		{
-		  collections(first: 10) {
-		    edges {
-		      cursor
-		      node {
-		        id
-		        handle
-		        title
-		        image {
-		          src
-		          altText
-		        }
-		        metafields(identifiers: [{namespace: "custom", key: "brand"}, {namespace: "custom", key: "color_number_index"}]) {
-		          key
-		          namespace
-		          value
+		  collection(id: "${id}") {
+		    title
+		    products(first: 250) {
+		      edges {
+		        node {
 		          id
+		          title
+		          description
+		          images(first: 1) {
+		            edges {
+		              node {
+		                src
+		                altText
+		              }
+		            }
+		          }
+		          priceRange {
+		            minVariantPrice {
+		              amount
+		              currencyCode
+		            }
+		          }
 		        }
 		      }
 		    }
-		    pageInfo {
-		      hasNextPage
-		      hasPreviousPage
-		    }
 		  }
 		}
-	`;
+		`;
 
     fetch(shopifyLink, {
         method: 'POST',
@@ -171,56 +267,35 @@ pi.fetchCollections = function(){
     })
     .then(response => response.json())
     .then(data => {
-        let collectionsArray = data.data.collections.edges;
-        collectionsArray.forEach(collection => {
-			 
-			 if (collection.node.metafields && collection.node.metafields.length > 0) {
-				 let metafields = collection.node.metafields;
-				 let brand = metafields[0]?metafields[0].value : "";
-				 if (!brandsDict[brand]) {
-					 brandsDict[brand]=[];
-				 }
-				 brandsDict[brand].push(collection);
-			 }
-		});
-		
+//        console.log(data);
+        let productsArray = data.data.collection.products.edges;
+        collectionDict[id] = productsArray;
+		resolve();
 		
 		
     })
-    .catch(error => console.error('Error fetching products:', error));
+    .catch(error => {
+		console.error('Error fetching products:', error);
+		reject(error);
+		})
+    
+    });
 //    console.log(brandsDict);
 //	localStorage.setItem('brandsData', JSON.stringify(brandsDict));
 //	let datajson = JSON.parse(localStorage.getItem('brandsData'));
 //	console.log(datajson);
 //    
-    
+ 
     
 };
 
-pi.displayCollection = function(collections){
-	console.log(collections);
-	let collectionsHtml = ''
-	collections.forEach(collection => {
-		const node = collection.node;
-		let imgSrc = node.image? node.image.src : 'images/DND.png';
-//		let productPrice = node.variants.edges[0].node.price.amount;
-		/*let productTitle = (node.title.length > 64) ? (node.title.slice(0,64) + "...") : node.title;*/
-//		titleArray = node.title.split(",");
-		let collectionTitle = node.title;
-//		let colorNum = titleArray[1];
-		
-		collectionsHtml +=
-		`<div class ="col-md-3 border-light collection">
-        	<div class= "collection-img">
-        		<img src="${imgSrc}" alt="Icon" >
-        	</div>
-			<div class= "collection-title">
-				<p>${collectionTitle}</p>
-			</div>
-		</div>`;
-	});
-	$('#product-container').html(collectionsHtml);
-}
+pi.displayProductsOfCollections= function(collectionID) {
+	console.log(collectionID);
+	console.log(collectionDict);
+	let products = collectionDict[collectionID];
+	console.log(products);
+
+};   
 
 }();
 
