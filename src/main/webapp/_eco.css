@@ -18,7 +18,7 @@ p
 	height: 70vh; 
     overflow-y: scroll;
     background-color: #f8f9fa; 
-    padding-top: 20px;
+    padding: 20px;
 }
 .brand {
 	display:flex;
@@ -67,7 +67,7 @@ p
 	justify-content: center;
 	align-items: center;
 }
-.product-img {
+.product-info-img {
 	position: relative;
 	background-color: white;
 	width: 100%;
@@ -78,12 +78,12 @@ p
 	align-items: center;
 	
 }
-.product-img img{
+.product-info-img img{
 	max-width: 100%;
 	max-height: 100%;
 	object-fit:contain;
 }
-.product-title{
+.product-info-title{
 	display: flex;
 	flex: 1;
 	justify-content: center;
@@ -91,7 +91,88 @@ p
 }
 #colorbased-products {
 	height: 50vh;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	align-content: flex-start;
+	display: flex;
+	flex-flow: row wrap;
 }
+.colored-product {
+	height: 100px;
+	width:50px;
+	margin: 5px 5px;
+	display: flex;
+	flex-direction: column;
+	background-color: #fdd7e2;
+	justify-content: center;
+	align-items: center;
+}
+.colored-product > .colored-product-img {
+	position: relative;
+	background-color: white;
+	width: 100%;
+	flex: 3;
+	overflow: hidden;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.colored-product-img img{
+	max-width: 100%;
+	max-height: 100%;
+	object-fit:contain;
+}
+
+.colored-product > .colored-product-title {
+	background-color: #f1f1f1;
+	width: 50px;
+	display: flex;
+	flex:1;
+	justify-content: center;
+	align-items: center;
+} 
+#special-products {
+	height: 50vh;
+	display: flex;
+	flex-direction: col;
+	align-items: flex-start;
+	align-content: flex-start;
+	display: flex;
+	flex-flow: row wrap;
+}
+.special-product {
+	height: 100px;
+	width:100%;
+	margin: 5px 5px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+}
+.special-product > .special-product-img {
+	position: relative;
+	background-color: white;
+	height: 100%;
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.special-product-img img{
+	max-width: 100%;
+	max-height: 100%;
+	object-fit:contain;
+}
+
+.special-product > .special-product-title {
+	background-color: #f1f1f1;
+	height: 100%;
+	display: flex;
+	flex:3;
+	
+} 
 
 /* cart */
 .cart-div {

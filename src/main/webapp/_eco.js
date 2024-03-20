@@ -309,45 +309,96 @@ pi.fetchProducts = function(id){
 
 pi.displayProducts = function(collectionID) {
 	collectionGid = collectionID;
-	let collectionData = collectionDict[collectionID];
-	console.log(collectionData);
-	let collection = collectionData.data.collection; 
-	let colImageSrc = collection.image? collection.image.src : "images/DND.png";
-	let colTitle = collection.title;
-	productFramesHtml = `
-	<div class="row ">
-        <div class="col-md-4 border-bold product-info" id="display-product">
-        	<div class = "product-img">
-        		<img src="${colImageSrc}" alt="Icon" >
-        	</div>
-        	<div class = "product-title">
-        		<h3>${colTitle}</h3>
-        	</div>
-        </div>
-        <div class="col-md-8 border-bold" id = "special-products">
-            <div class = "scrollable-window" id="color-number" style="height: 50vh">
-            
-                
-                
-            </div>
-        </div>
-    </div>
-    <div class="row scrollable-window" id ="colorbased-products">
-        
-    </div>
-	`;
-	$('#display-container').html(productFramesHtml);
-	let nameIndex = collection.metafields? collection.metafields[1].value: 99;
-	collection.products.edges.forEach(({node}, index) => {
-		titleArray = node.title.split(",");
-		console.log(titleArray);
-		if(titleArray[nameIndex]) {
-			
-		} else {
-			
-		}
+	pi.getCollectionData(collectionID).then(collectionData => {
+		console.log(collectionData.data.collection.products.edges);
+		let collection = collectionData.data.collection; 
+		let colImageSrc = collection.image? collection.image.src : "images/DND.png";
+		let colTitle = collection.title;
+		productFramesHtml = `
+		<div class="row ">
+	        <div class="col-md-4 border-bold product-info" id="display-product">
+	        	<div class = "product-info-img">
+	        		<img src="${colImageSrc}" alt="Icon" >
+	        	</div>
+	        	<div class = "product-info-title">
+	        		<h3>${colTitle}</h3>
+	        	</div>
+	        </div>
+	        <div class="col-md-8 border-bold scrollable-window" id = "special-products">
+	            <div class= "row special-product">
+		        	<div class = "special-product-img">
+		        		<img src="images/DND.png" alt="product image">
+		        	</div>
+		        	<div class = "special-product-title">
+		        		<h2>3500</h2>
+		        	</div>
+	        	</div>
+	        	<div class= "row special-product">
+		        	<div class = "special-product-img">
+		        		<img src="images/DND.png" alt="product image">
+		        	</div>
+		        	<div class = "special-product-title">
+		        		<h2>3500</h2>
+		        	</div>
+	        	</div>
+	        </div>
+	        </div>
+	    </div>
+	    <div class="row scrollable-window" id ="colorbased-products">
+	        
+	    </div>
+		`;
+		$('#display-container').html(productFramesHtml);
+		let nameIndex = collection.metafields? (collection.metafields[1].value - 1): 99;
+		let coloredProductHtml = ``;
+		let specialProductHtml=``;
+		console.log(collection.products.edges);
+		collection.products.edges.forEach(({node}, index) => {
+			let titleArray = node.title.split(",");
+//			console.log(titleArray, nameIndex)
+			let imgSrc = node.images.edges[0]? node.images.edges[0].node.src: "images/DND.png";
+			if(nameIndex < titleArray.length - 1) {
+				
+				coloredProductHtml += `
+				<div class= "colored-product">
+		        	<div class = "colored-product-img">
+		        		<img src="${imgSrc}" alt="product image">
+		        	</div>
+		        	<div class = "colored-product-title">
+		        		<h5>${titleArray[nameIndex]}</h5>
+		        	</div>
+	       		</div>
+				`;
+				
+			} else {
+				specialProductHtml +=`
+					<div class= "row special-product">
+			        	<div class = "special-product-img">
+			        		<img src="${imgSrc}" alt="product image">
+			        	</div>
+			        	<div class = "special-product-title">
+			        		<h3>${node.title}</h3>
+			        	</div>
+		        	</div>
+				`;
+			}
+		})
+		$('#colorbased-products').html(coloredProductHtml);
+		$('#special-products').html(specialProductHtml);
 	})
+	
 
+};
+pi.getCollectionData = function (collectionId){
+	return new Promise((resolve, reject) => {
+		data = collectionDict[collectionId];
+		if (data){
+			resolve(data);
+		}else {
+			reject(new Error('No Data Found.'));
+		}
+		
+	});
 };   
 
 }();
