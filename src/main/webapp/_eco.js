@@ -43,6 +43,8 @@ pi.clouch = function() {
 	});
 	clouch('#vendors .brand', click);
 	clouch('#display-container .collection', click);
+	clouch('.colored-product', click);
+	clouch('.special-product', click);
 };
 
 pi.load = function(next) {
@@ -121,6 +123,14 @@ var click = function(target) {
 		}).catch(error => {
 			console.error('Error in fetching products:', error);
 		});
+	}else if ($(target).hasClass('colored-product') || $(target).hasClass('special-product')){
+		$('.colored-product').removeClass('border-light');
+		$('.special-product').removeClass('border-light');
+		$(target).addClass('border-light');
+		let collectionID = $(target).data('collection');
+		let productIndex = $(target).data('index');
+		pi.updateProInfo(collectionID, productIndex);
+		
 	}
 		
 		
@@ -308,7 +318,6 @@ pi.fetchProducts = function(id){
 };
 
 pi.displayProducts = function(collectionID) {
-	collectionGid = collectionID;
 	pi.getCollectionData(collectionID).then(collectionData => {
 		console.log(collectionData.data.collection.products.edges);
 		let collection = collectionData.data.collection; 
@@ -352,7 +361,7 @@ pi.displayProducts = function(collectionID) {
 		let nameIndex = collection.metafields? (collection.metafields[1].value - 1): 99;
 		let coloredProductHtml = ``;
 		let specialProductHtml=``;
-		console.log(collection.products.edges);
+		console.log(collection.products.edges[2]);
 		collection.products.edges.forEach(({node}, index) => {
 			let titleArray = node.title.split(",");
 //			console.log(titleArray, nameIndex)
@@ -360,7 +369,7 @@ pi.displayProducts = function(collectionID) {
 			if(nameIndex < titleArray.length - 1) {
 				
 				coloredProductHtml += `
-				<div class= "colored-product">
+				<div class= "colored-product"  data-index ="${index}" data-collection="${collectionID}">
 		        	<div class = "colored-product-img">
 		        		<img src="${imgSrc}" alt="product image">
 		        	</div>
@@ -372,12 +381,12 @@ pi.displayProducts = function(collectionID) {
 				
 			} else {
 				specialProductHtml +=`
-					<div class= "row special-product">
+					<div class= "row special-product" data-index ="${index}" data-collection="${collectionID}">
 			        	<div class = "special-product-img">
 			        		<img src="${imgSrc}" alt="product image">
 			        	</div>
 			        	<div class = "special-product-title">
-			        		<h3>${node.title}</h3>
+			        		<h4>${node.title}</h4>
 			        	</div>
 		        	</div>
 				`;
@@ -389,6 +398,27 @@ pi.displayProducts = function(collectionID) {
 	
 
 };
+
+pi.updateProInfo = function(collectionID, productIndex) {
+	pi.getCollectionData(collectionID).then(collectionData =>{
+		let node = collectionData.data.collection.products.edges[productIndex].node; 
+		console.log (node);
+		let imgSrc = node.images.edges[0]? node.images.edges[0].node.src: "images/DND.png";
+		let productTitle = node.title;
+		
+		productHtml = `
+	        
+	    	<div class = "product-info-img">
+	    		<img src="${imgSrc}" alt="Icon" >
+	    	</div>
+	    	<div class = "product-info-title">
+	    		<h3>${productTitle}</h3>
+	    	</div>
+	    `
+	    console.log (productHtml);
+	    $('#display-product').html(productHtml);
+	});
+}
 pi.getCollectionData = function (collectionId){
 	return new Promise((resolve, reject) => {
 		data = collectionDict[collectionId];
