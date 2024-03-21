@@ -23,46 +23,46 @@ const config = {
 		    }
 		  },
 		  items: [
-		    {
-		      id: "collection001", //collectionID
-		      label: "Collection Number 001", //collectiontitle
-		      price0: 0.00, //calculated by variants
-		      count: 0,
-		      price: 0.00, //calculated by variants
-		
-		      size: 0.00,
-		      pricelabel: "",
-		      subitems: [
-		        {
-		          label: "",
-		          price: 0.00
-		        }
-		      ],
-		      extras: [
-		        {
-		          label: "",
-		          price: 0.50
-		        }
-		      ],
-		
-		      variants: [ //store product-info
-		        {
-		          id: "product001", //productID
-		          label: "Product Number 001", //productTitle
-		          count: 0, //quantity of products
-		          price0: 0.00, // price of one unit
-		          value: "Medium", //index of product in Collection for efficiency
-		          price: 0.00 //Total Price
-		        }
-		      ],
-		      extras: [
-		        {
-		          id: "extra01",
-		          label: "Whipped Cream",
-		          price: 0.50
-		        }
-		      ]
-		    }
+//		    {
+//		      id: "collection001", //collectionID
+//		      label: "Collection Number 001", //collectiontitle
+//		      price0: 0.00, //calculated by variants
+//		      count: 0,
+//		      price: 0.00, //calculated by variants
+//		
+//		      size: 0.00,
+//		      pricelabel: "",
+//		      subitems: [
+////		        {
+////		          label: "",
+////		          price: 0.00
+////		        }
+//		      ],
+//		      extras: [
+////		        {
+////		          label: "",
+////		          price: 0.50
+////		        }
+//		      ],
+//		
+//		      variants: [ //store product-info
+////		        {
+////		          id: "product001", //productID
+////		          label: "Product Number 001", //productTitle
+////		          count: 0, //quantity of products
+////		          price0: 0.00, // price of one unit
+////		          value: "Medium", //index of product in Collection for efficiency
+////		          price: 0.00 //Total Price
+////		        }
+//		      ],
+//		      extras: [
+////		        {
+////		          id: "extra01",
+////		          label: "Whipped Cream",
+////		          price: 0.50
+////		        }
+//		      ]
+//		    }
 		  ],
 		  note: "",
 		  discount1: 0.00,

@@ -80,9 +80,10 @@ pi.render = function(options) {
             <div class="col-md-3 border-bold cart-div">
                 <div id="cart">
                 	<p>#0001<p>
-                	<div class ="scrollable-window ticket-collections">
+                	<div class ="scrollable-window ticket-items">
                 	</div>
                 	<div class ="ticket-total-price">
+                		
                 	</div>
                 </div>
             </div>
@@ -97,6 +98,22 @@ pi.render = function(options) {
 };
 
 pi.displayTicket = function() {
+	let ticketHtml = `<ul>`;
+	let totalPrice = 0;
+	console.log(ticket);
+	ticket.items.forEach(item =>{
+		
+		ticketHtml += `<li>${item.label} $${item.price.toFixed(2)}`;
+		totalPrice += item.price;
+		item.variants.forEach(variant =>{
+			ticketHtml += `<br> - ${variant.count} x ${variant.label}`;
+		});
+		ticketHtml += `</li>`;
+		
+	});
+	ticketHtml += `</ul>`;
+	$('.ticket-items').html(ticketHtml);
+	$('.ticket-total-price').html(`<h2>Total: ${totalPrice.toFixed(2)}`);
 	
 };
 /*Load the data from config.js file*/
@@ -143,7 +160,10 @@ var click = function(target) {
 		$(target).addClass('border-light');
 		let collectionID = $(target).data('collection');
 		let productIndex = $(target).data('index');
-		pi.updateProInfo(collectionID, productIndex);
+		let productLabel = $(target).data('label');
+//		console.log(collectionID, productIndex, productLabel);
+
+		pi.updateProInfo(collectionID, productIndex, productLabel);
 		
 	}else if ($(target).hasClass('quantity-btn')){
 		if ($(target).hasClass('plus')) {
@@ -153,7 +173,7 @@ var click = function(target) {
 		};
 		
 	}else if ($(target).hasClass('add-to-cart')){
-		pi.addToCart();
+		pi.addToCart(target);
 	}
 		
 		
@@ -377,7 +397,7 @@ pi.displayProducts = function(collectionID) {
 			if(nameIndex < titleArray.length - 1) {
 				
 				coloredProductHtml += `
-				<div class= "colored-product"  data-index ="${index}" data-collection="${collectionID}">
+				<div class= "colored-product"  data-index ="${index}" data-collection="${collectionID}" data-label ="${titleArray[nameIndex]}">
 		        	<div class = "colored-product-img">
 		        		<img src="${imgSrc}" alt="product image">
 		        	</div>
@@ -389,7 +409,7 @@ pi.displayProducts = function(collectionID) {
 				
 			} else {
 				specialProductHtml +=`
-					<div class= "row special-product" data-index ="${index}" data-collection="${collectionID}">
+					<div class= "row special-product" data-index ="${index}" data-collection="${collectionID}" data-label ="${node.title}">
 			        	<div class = "special-product-img">
 			        		<img src="${imgSrc}" alt="product image">
 			        	</div>
@@ -407,13 +427,13 @@ pi.displayProducts = function(collectionID) {
 
 };
 
-pi.updateProInfo = function(collectionID, productIndex) {
+pi.updateProInfo = function(collectionID, productIndex, productLabel) {
 	pi.getCollectionData(collectionID).then(collectionData =>{
 		let node = collectionData.data.collection.products.edges[productIndex].node; 
-		console.log (node);
+//		console.log (node);
 		let imgSrc = node.images.edges[0]? node.images.edges[0].node.src: "images/DND.png";
 		let productTitle = node.title;
-		let productPrice = node.priceRange.minVariantPrice.amount;
+		let productPrice = parseFloat(node.priceRange.minVariantPrice.amount);
 		
 		productHtml = `
 	        
@@ -424,7 +444,7 @@ pi.updateProInfo = function(collectionID, productIndex) {
 	    		<h3>${productTitle}</h3>
 	    	</div>
 	    	<div class = "product-info-price">
-	    		<h3>$ ${productPrice}</h3>
+	    		<h3>$${productPrice.toFixed(2)}</h3>
 	    	</div>
 	    	<div class="cart-form">
 			    <div class="quantity-selector">
@@ -433,7 +453,9 @@ pi.updateProInfo = function(collectionID, productIndex) {
 			        onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
 			        <button class="quantity-btn plus" >+</button>
 			    </div>
-			    <button type="button" class="add-to-cart" >Add to Cart</button>
+			    <button type="button" class="add-to-cart" data-collectionid ="${collectionID}" data-productindex ="${productIndex}" data-productlabel = "${productLabel}"
+			    >Add to Cart</button>
+			    
 			</div>
 	    `
 	    
@@ -457,8 +479,88 @@ pi.changeQuantity= function(num){
 	let newQuantity = currentQuantity + num;
 	newQuantity = newQuantity < 1 ? 1 : newQuantity;
 	quantityInput.value = newQuantity;
-}
+};
+
+pi.addToCart = function(target) {
+//	console.log(target);
+	let collectionID = $(target).data('collectionid');
+	let productIndex = $(target).data('productindex');
+	let productLabel = $(target).data('productlabel');
+//	console.log(collectionID,productIndex,productLabel);
+	pi.getCollectionData(collectionID).then(collectionData =>{
+		let node = collectionData.data.collection.products.edges[productIndex].node;
+//		console.log(node);
+		let productID = node.id;
+		let productPrice = parseFloat(node.priceRange.minVariantPrice.amount);
+		let quantityInput = document.querySelector('.quantity-input');
+		let quantity = parseInt(quantityInput.value); 
+		console.log( quantityInput);
+		let collectionExist = ticket.items.find(item => item.id === collectionID);
+		if (collectionExist) {
+			let productExist = collectionExist.variants.find(variant => variant.id === productID);
+			if (productExist) {
+				productExist.count += quantity;
+			} else {
+				let newProduct = {
+		          id: productID, //productID
+		          label: productLabel, //productTitle
+		          count: quantity, //quantity of products
+		          price0: productPrice, // price of one unit
+		          value: productIndex, //index of product in Collection for efficiency
+		          price: 0.00 //Total Price
+		        }
+		        collectionExist.variants.push(newProduct);
+			}
+		} else {
+			let newCollection = {
+			      id: collectionID, //collectionID
+			      label: collectionData.data.collection.title, //collectiontitle
+			      price0: 0.00, //calculated by variants
+			      count: 0,
+			      price: 0.00, //calculated by variants
+			
+			      size: 0.00,
+			      pricelabel: "",
+			      subitems: [],
+			      extras: [],
+			
+			      variants: [ //store product-info
+			        {
+			          id: productID, //productID
+			          label: productLabel, //productTitle
+			          count: quantity, //quantity of products
+			          price0: productPrice, // price of one unit
+			          value: productIndex, //index of product in Collection for efficiency
+			          price: 0.00 //Total Price
+			        }
+			      ],
+			      extras: []
+		    };
+			
+			ticket.items.push(newCollection);
+		};
+		console.log(ticket);
+		pi.calculateTicketTotal().then(pi.displayTicket());
+		
+	});
+};
+
+pi.calculateTicketTotal = function() {
+	return new Promise((resolve, reject) => {
+		ticket.items.forEach( item => {
+			let itemPrice = 0;
+			item.variants.forEach(variant => {
+				variant.price = variant.price0 * variant.count;
+				itemPrice += variant.price;
+				
+			});
+			item.price = itemPrice;
+		});
+	});
+};
 
 }();
+
+
 
 
