@@ -11,7 +11,8 @@ var pi = this;
 
 var vendor = '';
 
-var collectionGid='';
+
+var ticket ;
 
 const brandsDict = {};
 
@@ -45,6 +46,9 @@ pi.clouch = function() {
 	clouch('#display-container .collection', click);
 	clouch('.colored-product', click);
 	clouch('.special-product', click);
+	clouch('.quantity-btn', click);
+	clouch('.add-to-cart', click);
+	
 };
 
 pi.load = function(next) {
@@ -75,14 +79,24 @@ pi.render = function(options) {
             </div>
             <div class="col-md-3 border-bold cart-div">
                 <div id="cart">
-                    <p>Show Cart Here</p>
+                	<p>#0001<p>
+                	<div class ="scrollable-window ticket-collections">
+                	</div>
+                	<div class ="ticket-total-price">
+                	</div>
                 </div>
             </div>
         </div>
     	`;
 	$('#moeco').html(html);
-		
+	
 	pi.loadSearchOptions();
+	ticket = config.ticket;
+	pi.displayTicket();
+	
+};
+
+pi.displayTicket = function() {
 	
 };
 /*Load the data from config.js file*/
@@ -131,6 +145,15 @@ var click = function(target) {
 		let productIndex = $(target).data('index');
 		pi.updateProInfo(collectionID, productIndex);
 		
+	}else if ($(target).hasClass('quantity-btn')){
+		if ($(target).hasClass('plus')) {
+			pi.changeQuantity(1);
+		} else if($(target).hasClass('minus')) {
+			pi.changeQuantity(-1);
+		};
+		
+	}else if ($(target).hasClass('add-to-cart')){
+		pi.addToCart();
 	}
 		
 		
@@ -319,7 +342,7 @@ pi.fetchProducts = function(id){
 
 pi.displayProducts = function(collectionID) {
 	pi.getCollectionData(collectionID).then(collectionData => {
-		console.log(collectionData.data.collection.products.edges);
+//		console.log(collectionData.data.collection.products.edges);
 		let collection = collectionData.data.collection; 
 		let colImageSrc = collection.image? collection.image.src : "images/DND.png";
 		let colTitle = collection.title;
@@ -333,27 +356,12 @@ pi.displayProducts = function(collectionID) {
 	        		<h3>${colTitle}</h3>
 	        	</div>
 	        </div>
-	        <div class="col-md-8 border-bold scrollable-window" id = "special-products">
-	            <div class= "row special-product">
-		        	<div class = "special-product-img">
-		        		<img src="images/DND.png" alt="product image">
-		        	</div>
-		        	<div class = "special-product-title">
-		        		<h2>3500</h2>
-		        	</div>
-	        	</div>
-	        	<div class= "row special-product">
-		        	<div class = "special-product-img">
-		        		<img src="images/DND.png" alt="product image">
-		        	</div>
-		        	<div class = "special-product-title">
-		        		<h2>3500</h2>
-		        	</div>
-	        	</div>
+	        <div class="col-md-8 border-bold scrollable-window" id = "colorbased-products">
+	            
 	        </div>
 	        </div>
 	    </div>
-	    <div class="row scrollable-window" id ="colorbased-products">
+	    <div class="row scrollable-window-x" id ="special-products">
 	        
 	    </div>
 		`;
@@ -361,7 +369,7 @@ pi.displayProducts = function(collectionID) {
 		let nameIndex = collection.metafields? (collection.metafields[1].value - 1): 99;
 		let coloredProductHtml = ``;
 		let specialProductHtml=``;
-		console.log(collection.products.edges[2]);
+//		console.log(collection.products.edges[2]);
 		collection.products.edges.forEach(({node}, index) => {
 			let titleArray = node.title.split(",");
 //			console.log(titleArray, nameIndex)
@@ -405,6 +413,7 @@ pi.updateProInfo = function(collectionID, productIndex) {
 		console.log (node);
 		let imgSrc = node.images.edges[0]? node.images.edges[0].node.src: "images/DND.png";
 		let productTitle = node.title;
+		let productPrice = node.priceRange.minVariantPrice.amount;
 		
 		productHtml = `
 	        
@@ -414,8 +423,20 @@ pi.updateProInfo = function(collectionID, productIndex) {
 	    	<div class = "product-info-title">
 	    		<h3>${productTitle}</h3>
 	    	</div>
+	    	<div class = "product-info-price">
+	    		<h3>$ ${productPrice}</h3>
+	    	</div>
+	    	<div class="cart-form">
+			    <div class="quantity-selector">
+			        <button  class="quantity-btn minus" >-</button>
+			        <input type="text" class="quantity-input" value="1" min="1" 
+			        onkeypress="return event.charCode >= 48 && event.charCode <= 57" />
+			        <button class="quantity-btn plus" >+</button>
+			    </div>
+			    <button type="button" class="add-to-cart" >Add to Cart</button>
+			</div>
 	    `
-	    console.log (productHtml);
+	    
 	    $('#display-product').html(productHtml);
 	});
 }
@@ -429,7 +450,14 @@ pi.getCollectionData = function (collectionId){
 		}
 		
 	});
-};   
+};
+pi.changeQuantity= function(num){
+	let quantityInput = document.querySelector('.quantity-input');
+	let currentQuantity = parseInt(quantityInput.value);
+	let newQuantity = currentQuantity + num;
+	newQuantity = newQuantity < 1 ? 1 : newQuantity;
+	quantityInput.value = newQuantity;
+}
 
 }();
 
